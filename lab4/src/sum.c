@@ -1,0 +1,19 @@
+#include <stdlib.h>
+#include <pthread.h>
+#include "sum.h"
+
+int Sum(const struct SumArgs *args) {
+    int sum = 0;
+    for (int i = args->begin; i < args->end; i++) {
+        sum += args->array[i];
+    }
+    return sum;
+}
+
+void *ThreadSum(void *args) {
+    struct SumArgs *sum_args = (struct SumArgs *)args;
+    int *result = malloc(sizeof(int));
+    if (result == NULL) return NULL;
+    *result = Sum(sum_args);
+    return (void *)result;
+}

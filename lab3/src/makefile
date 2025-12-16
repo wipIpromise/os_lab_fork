@@ -46,8 +46,8 @@
 # .PHONY: all clean rebuild help
 
 CC=gcc
-CFLAGS=-I.
-TARGETS=sequential_min_max parallel_min_max exec_sequential  # Добавили exec_sequential
+CFLAGS=-I. -Wall -Wextra
+TARGETS=sequential_min_max parallel_min_max exec_sequential
 
 # Target по умолчанию
 all: $(TARGETS)
@@ -56,7 +56,7 @@ all: $(TARGETS)
 sequential_min_max: utils.o find_min_max.o utils.h find_min_max.h sequential_min_max.c
 	$(CC) -o $@ find_min_max.o utils.o sequential_min_max.c $(CFLAGS)
 
-# Параллельная версия
+# Параллельная версия с таймаутом
 parallel_min_max: utils.o find_min_max.o utils.h find_min_max.h parallel_min_max.c
 	$(CC) -o $@ utils.o find_min_max.o parallel_min_max.c $(CFLAGS)
 
@@ -73,25 +73,25 @@ find_min_max.o: find_min_max.c find_min_max.h utils.h
 
 # Очистка
 clean:
-	rm -f utils.o find_min_max.o $(TARGETS) *.o
+	rm -f utils.o find_min_max.o $(TARGETS) *.o min_max_*.txt
 
-# Пересборка
-rebuild: clean all
+# Тесты
+test_parallel:
+	@echo "=== Test without timeout ==="
+	./parallel_min_max --seed 42 --array_size 10000 --pnum 4
+	@echo ""
+	@echo "=== Test with timeout (should complete) ==="
+	./parallel_min_max --seed 42 --array_size 1000 --pnum 2 --timeout 5
+	@echo ""
+	@echo "=== Test with short timeout (may be killed) ==="
+	./parallel_min_max --seed 42 --array_size 100000 --pnum 8 --timeout 1
 
 # Помощь
 help:
 	@echo "Доступные команды:"
 	@echo "  make all             - собрать все программы"
-	@echo "  make sequential_min_max - последовательная версия"
-	@echo "  make parallel_min_max   - параллельная версия"
-	@echo "  make exec_sequential    - программа для запуска через exec"
+	@echo "  make parallel_min_max - параллельная версия с таймаутом"
+	@echo "  make test_parallel   - запустить тесты"
 	@echo "  make clean           - удалить скомпилированные файлы"
-	@echo "  make rebuild         - пересобрать всё"
-	@echo "  make help            - эта справка"
 
-# Пример запуска:
-example:
-	@echo "Пример использования:"
-	@echo "  ./exec_sequential 42 100"
-
-.PHONY: all clean rebuild help example
+.PHONY: all clean test_parallel help
